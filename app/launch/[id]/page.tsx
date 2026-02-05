@@ -22,7 +22,10 @@ export default async function LaunchDetailPage({
 
     return (
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <Link href="/" className="text-sm text-haze hover:text-neon">
+        <Link
+          href="/"
+          className="text-sm text-haze transition hover:text-neon active:translate-x-[-2px]"
+        >
           ← Back to launches
         </Link>
 

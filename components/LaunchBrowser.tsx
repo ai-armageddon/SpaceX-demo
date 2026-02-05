@@ -221,7 +221,7 @@ export default function LaunchBrowser({
             <Link
               key={launch.id}
               href={`/launch/${launch.id}`}
-              className={`group flex h-full gap-6 rounded-2xl border border-slate/70 bg-midnight/80 p-6 transition hover:-translate-y-1 hover:border-neon/60 hover:shadow-glow ${
+              className={`group flex h-full gap-6 rounded-2xl border border-slate/70 bg-midnight/80 p-6 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-neon/60 hover:shadow-glow active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon/50 ${
                 view === 'grid' ? 'flex-col' : 'items-center'
               }`}
             >

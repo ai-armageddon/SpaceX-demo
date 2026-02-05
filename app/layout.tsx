@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import PageTransition from '@/components/PageTransition';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -47,11 +48,43 @@ export default function RootLayout({
               </div>
               <div className="hidden items-center gap-2 text-sm text-haze md:flex">
                 <span className="inline-flex h-2 w-2 rounded-full bg-neon shadow-glow" />
-                Live data from SpaceX API
+                Community SpaceX data
               </div>
             </div>
           </header>
-          {children}
+          <PageTransition>{children}</PageTransition>
+          <footer className="border-t border-slate/60 bg-midnight/60">
+            <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-haze sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Data provided by the community SpaceX API. This site is not powered by an official SpaceX API.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <a
+                  href="https://docs.spacexdata.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-neon/80 underline-offset-4 transition hover:text-neon hover:underline"
+                >
+                  docs.spacexdata.com
+                </a>
+                <a
+                  href="https://x.com/jeremyboulerice"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-haze transition hover:text-white"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-3.5 w-3.5 fill-current"
+                  >
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.505 11.24H16.1l-5.302-6.932-6.064 6.932H1.426l7.73-8.83L1 2.25h6.908l4.79 6.322L18.244 2.25zm-1.16 17.52h1.833L6.63 4.126H4.667L17.084 19.77z" />
+                  </svg>
+                  @jeremyboulerice
+                </a>
+              </div>
+            </div>
+          </footer>
         </div>
       </body>
     </html>
