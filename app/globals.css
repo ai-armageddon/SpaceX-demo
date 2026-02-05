@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-night text-white antialiased;
+  font-feature-settings: "ss01" on, "ss02" on;
+  font-family: var(--font-space), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(125, 211, 252, 0.25);
+}
