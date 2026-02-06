@@ -5,6 +5,7 @@ export type Launch = {
   name: string;
   date_utc: string;
   success: boolean | null;
+  upcoming: boolean;
   rocket: string;
   details: string | null;
   links: {
@@ -21,6 +22,26 @@ export type Launch = {
     article: string | null;
   };
 };
+
+export const LAUNCH_COUNT_CUTOFF_UTC = new Date('2022-12-04T23:59:59Z');
+export const EXCLUDED_LAUNCH_IDS = new Set(['5eb87ad9ffd86e000604b360']);
+
+export function stripExcludedLaunches(launches: Launch[]) {
+  return launches.filter((launch) => !EXCLUDED_LAUNCH_IDS.has(launch.id));
+}
+
+export function includeInOfficialCount(
+  launch: Launch,
+  cutoff: Date | number = LAUNCH_COUNT_CUTOFF_UTC
+) {
+  if (EXCLUDED_LAUNCH_IDS.has(launch.id)) return false;
+  if (launch.upcoming) return false;
+  const dateValue = Date.parse(launch.date_utc);
+  if (Number.isNaN(dateValue)) return false;
+  const cutoffValue = typeof cutoff === 'number' ? cutoff : cutoff.getTime();
+  if (dateValue > cutoffValue) return false;
+  return true;
+}
 
 export type Rocket = {
   id: string;

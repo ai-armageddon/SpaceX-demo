@@ -125,7 +125,13 @@ export default async function LaunchDetailPage({
                       rel="noreferrer"
                       className="relative aspect-square overflow-hidden rounded-xl border border-slate/70 bg-night/70"
                     >
-                      <Image src={url} alt={`${launch.name} photo`} fill className="object-cover" />
+                      <img
+                        src={url}
+                        alt={`${launch.name} photo`}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover"
+                      />
                     </a>
                   ))}
                 </div>

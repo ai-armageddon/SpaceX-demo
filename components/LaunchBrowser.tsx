@@ -54,9 +54,7 @@ export default function LaunchBrowser({
       if (status === 'all') return true;
       if (status === 'success') return launch.success === true;
       if (status === 'failure') return launch.success === false;
-      if (status === 'upcoming') {
-        return launch.success === null && new Date(launch.date_utc).getTime() > Date.now();
-      }
+      if (status === 'upcoming') return launch.upcoming === true;
       return true;
     });
 
