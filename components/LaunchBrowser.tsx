@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import type { Launch, Rocket } from '@/lib/spacex';
 import { buildLaunchSlug, formatLaunchDate } from '@/lib/spacex';
 
@@ -44,6 +44,8 @@ export default function LaunchBrowser({
   const [view, setView] = useState<(typeof viewOptions)[number]['value']>('grid');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(18);
+  const [pageInput, setPageInput] = useState('1');
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const rocketMap = useMemo(() => {
     return new Map(rockets.map((rocket) => [rocket.id, rocket]));
@@ -99,6 +101,8 @@ export default function LaunchBrowser({
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
+  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = filtered.length === 0 ? 0 : Math.min(currentPage * pageSize, filtered.length);
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
@@ -117,10 +121,41 @@ export default function LaunchBrowser({
     hideFilters.pending
   ]);
 
+  useEffect(() => {
+    setPageInput(String(currentPage));
+  }, [currentPage]);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 160);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  function goToPage(target: number) {
+    if (!Number.isFinite(target)) return;
+    const clamped = Math.max(1, Math.min(totalPages, Math.trunc(target)));
+    setPage(clamped);
+  }
+
+  function handlePageJump(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsed = Number(pageInput);
+    if (!Number.isFinite(parsed)) {
+      setPageInput(String(currentPage));
+      return;
+    }
+    goToPage(parsed);
+  }
+
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-10">
-      <div className="grid gap-4 rounded-2xl border border-slate/70 bg-steel/70 p-6 shadow-glow sm:grid-cols-2 xl:grid-cols-12">
-        <div className="sm:col-span-2 xl:col-span-3">
+      <div className="grid items-start gap-4 rounded-2xl border border-slate/70 bg-steel/70 p-6 shadow-glow sm:grid-cols-2 xl:grid-cols-12">
+        <div className="min-w-0 sm:col-span-2 xl:col-span-2">
           <p className="text-sm text-haze">Search missions</p>
           <input
             value={query}
@@ -129,7 +164,7 @@ export default function LaunchBrowser({
             className="mt-2 min-h-[52px] w-full rounded-xl border border-slate/60 bg-night/70 px-4 py-3 text-sm text-white outline-none transition focus:border-neon/70 focus:ring-2 focus:ring-neon/30"
           />
         </div>
-        <div className="xl:col-span-2">
+        <div className="min-w-0 xl:col-span-2">
           <p className="text-sm text-haze">Sort launches</p>
           <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
             <select
@@ -145,9 +180,9 @@ export default function LaunchBrowser({
             </select>
           </div>
         </div>
-        <div className="sm:col-span-2 xl:col-span-3">
+        <div className="min-w-0 sm:col-span-2 xl:col-span-2">
           <p className="text-sm text-haze">Hide filters</p>
-          <div className="mt-2 grid min-h-[52px] grid-cols-2 gap-2 rounded-xl border border-slate/60 bg-night/70 p-2 sm:grid-cols-4 xl:grid-cols-2">
+            <div className="mt-2 grid min-h-[52px] grid-cols-2 gap-2 rounded-xl border border-slate/60 bg-night/70 p-2 sm:grid-cols-4 xl:grid-cols-2">
             {hideFilterOptions.map((option) => (
               <button
                 key={option.key}
@@ -158,7 +193,7 @@ export default function LaunchBrowser({
                     [option.key]: !prev[option.key]
                   }))
                 }
-                className={`h-9 whitespace-nowrap rounded-lg px-2 text-[11px] font-semibold uppercase tracking-wider transition sm:text-xs ${
+                className={`h-9 whitespace-nowrap rounded-lg px-2 text-[11px] font-semibold uppercase tracking-wider transition sm:text-xs xl:text-[11px] ${
                   hideFilters[option.key]
                     ? 'bg-rose-500/20 text-rose-200'
                     : 'text-haze hover:text-white'
@@ -169,7 +204,7 @@ export default function LaunchBrowser({
             ))}
           </div>
         </div>
-        <div className="xl:col-span-2">
+        <div className="min-w-0 xl:col-span-2">
           <p className="text-sm text-haze">Filter year</p>
           <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
             <select
@@ -188,15 +223,15 @@ export default function LaunchBrowser({
             </select>
           </div>
         </div>
-        <div className="xl:col-span-1">
+        <div className="min-w-0 sm:col-span-2 xl:col-span-2">
           <p className="text-sm text-haze">View</p>
-          <div className="mt-2 inline-flex min-h-[52px] w-full items-center gap-2 rounded-xl border border-slate/60 bg-night/70 p-1">
+          <div className="mt-2 grid min-h-[52px] w-full grid-cols-1 items-center gap-1 rounded-xl border border-slate/60 bg-night/70 p-1">
             {viewOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => setView(option.value)}
-                className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                className={`rounded-lg px-2 py-2 text-[11px] font-semibold uppercase tracking-wider transition sm:text-xs ${
                   view === option.value
                     ? 'bg-neon/20 text-neon'
                     : 'text-haze hover:text-white'
@@ -207,17 +242,17 @@ export default function LaunchBrowser({
             ))}
           </div>
         </div>
-        <div className="xl:col-span-1">
+        <div className="min-w-0 sm:col-span-2 xl:col-span-2">
           <p className="text-sm text-haze">Page size</p>
           <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
             <select
               value={pageSize}
               onChange={(event) => setPageSize(Number(event.target.value))}
-              className="min-h-[52px] w-full bg-transparent py-3 text-sm text-white outline-none"
+              className="min-h-[52px] w-full bg-transparent py-3 pr-7 text-sm text-white outline-none"
             >
               {[12, 18, 24, 36].map((size) => (
                 <option key={size} value={size} className="bg-night">
-                  {size} per page
+                  {size}
                 </option>
               ))}
             </select>
@@ -225,11 +260,81 @@ export default function LaunchBrowser({
         </div>
       </div>
 
+      {filtered.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-slate/70 bg-midnight/60 p-4">
+          <div className="flex flex-col items-start justify-between gap-3 text-sm text-haze lg:flex-row lg:items-center">
+            <div>
+              Showing {startIndex}-{endIndex} of {filtered.length}
+            </div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <span className="px-1 text-xs uppercase tracking-[0.3em] text-haze">
+                Page {currentPage} / {totalPages}
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === 1}
+                >
+                  First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage - 1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === 1}
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage + 1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(totalPages)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === totalPages}
+                >
+                  Last
+                </button>
+              </div>
+              <form onSubmit={handlePageJump} className="flex items-center gap-2">
+                <label htmlFor="jump-top" className="text-xs uppercase tracking-[0.2em] text-haze">
+                  Jump
+                </label>
+                <input
+                  id="jump-top"
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  inputMode="numeric"
+                  value={pageInput}
+                  onChange={(event) => setPageInput(event.target.value)}
+                  className="h-10 w-20 rounded-xl border border-slate/60 bg-night/70 px-3 text-sm text-white outline-none transition focus:border-neon/70 focus:ring-2 focus:ring-neon/30"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon"
+                >
+                  Go
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         className={
           view === 'grid'
-            ? 'mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3'
-            : 'mt-8 flex flex-col gap-4'
+            ? 'mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3'
+            : 'mt-6 flex flex-col gap-4'
         }
       >
         {paginated.map((launch) => {
@@ -295,33 +400,96 @@ export default function LaunchBrowser({
       )}
 
       {filtered.length > 0 && (
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 text-sm text-haze sm:flex-row">
-          <div>
-            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} of{' '}
-            {filtered.length}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={currentPage === 1}
-            >
-              Prev
-            </button>
-            <span className="px-2 text-xs uppercase tracking-[0.3em] text-haze">
-              Page {currentPage} / {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-              className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
+        <div className="mt-10 rounded-2xl border border-slate/70 bg-midnight/60 p-4">
+          <div className="flex flex-col items-start justify-between gap-3 text-sm text-haze lg:flex-row lg:items-center">
+            <div>
+              Showing {startIndex}-{endIndex} of {filtered.length}
+            </div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <span className="px-1 text-xs uppercase tracking-[0.3em] text-haze">
+                Page {currentPage} / {totalPages}
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => goToPage(1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === 1}
+                >
+                  First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage - 1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === 1}
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(currentPage + 1)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-4 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goToPage(totalPages)}
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === totalPages}
+                >
+                  Last
+                </button>
+              </div>
+              <form onSubmit={handlePageJump} className="flex items-center gap-2">
+                <label htmlFor="jump-bottom" className="text-xs uppercase tracking-[0.2em] text-haze">
+                  Jump
+                </label>
+                <input
+                  id="jump-bottom"
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  inputMode="numeric"
+                  value={pageInput}
+                  onChange={(event) => setPageInput(event.target.value)}
+                  className="h-10 w-20 rounded-xl border border-slate/60 bg-night/70 px-3 text-sm text-white outline-none transition focus:border-neon/70 focus:ring-2 focus:ring-neon/30"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full border border-slate/70 bg-night/70 px-3 py-2 text-haze transition hover:border-neon/60 hover:text-neon"
+                >
+                  Go
+                </button>
+              </form>
+            </div>
           </div>
         </div>
+      )}
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          title="Back to top"
+          className="fixed bottom-6 right-6 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate/60 bg-midnight/90 text-haze shadow-glow backdrop-blur transition hover:border-neon/60 hover:text-neon"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 15l6-6 6 6" />
+          </svg>
+        </button>
       )}
     </section>
   );

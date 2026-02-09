@@ -94,6 +94,23 @@ function pickWebcast(launch) {
   return null;
 }
 
+function isLl2ApiUrl(url) {
+  return typeof url === 'string' && /^https?:\/\/ll\.thespacedevs\.com\/2\.2\.0\//i.test(url);
+}
+
+function pickArticle(launch) {
+  if (Array.isArray(launch.infoURLs) && launch.infoURLs.length > 0) {
+    const info = launch.infoURLs.find((item) => typeof item?.url === 'string' && !isLl2ApiUrl(item.url));
+    if (info?.url) return info.url;
+  }
+
+  if (typeof launch.url === 'string' && !isLl2ApiUrl(launch.url)) {
+    return launch.url;
+  }
+
+  return null;
+}
+
 function normalizeRocket(launch, knownRocketIdsByName) {
   const config = launch.rocket?.configuration;
   const rocketName =
@@ -157,7 +174,7 @@ function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
         },
         webcast: pickWebcast(launch),
         wikipedia: null,
-        article: launch.url ?? null
+        article: pickArticle(launch)
       }
     },
     supplementalRocket

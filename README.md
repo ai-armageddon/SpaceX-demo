@@ -2,7 +2,7 @@
 
 A modern, lightweight dashboard for exploring SpaceX launch history with real-time search, filters, and rich launch details.
 
-![App Screenshot](public/preview.png)
+![App Preview](public/brand/spacex-logo.png)
 
 **Live demo:** https://jeremyboulerice.com/SpaceX-demo
 

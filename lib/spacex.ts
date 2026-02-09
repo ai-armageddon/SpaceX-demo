@@ -39,6 +39,25 @@ export type Rocket = {
 
 const supplementalLaunches = supplementalLaunchesData as Launch[];
 const supplementalRockets = supplementalRocketsData as Rocket[];
+const LL2_API_PREFIX = /^https?:\/\/ll\.thespacedevs\.com\/2\.2\.0\//i;
+
+function sanitizeExternalUrl(url: string | null) {
+  if (!url) return null;
+  if (LL2_API_PREFIX.test(url)) return null;
+  return url;
+}
+
+function sanitizeLaunchLinks(launch: Launch): Launch {
+  return {
+    ...launch,
+    links: {
+      ...launch.links,
+      webcast: sanitizeExternalUrl(launch.links.webcast),
+      wikipedia: sanitizeExternalUrl(launch.links.wikipedia),
+      article: sanitizeExternalUrl(launch.links.article)
+    }
+  };
+}
 
 export function stripExcludedLaunches(launches: Launch[]) {
   return launches.filter((launch) => !EXCLUDED_LAUNCH_IDS.has(launch.id));
@@ -73,7 +92,7 @@ function mergeLaunches(primary: Launch[], secondary: Launch[]) {
     const fingerprint = buildLaunchFingerprint(launch);
     if (seenFingerprint.has(fingerprint)) continue;
 
-    merged.set(launch.id, launch);
+    merged.set(launch.id, sanitizeLaunchLinks(launch));
     seenFingerprint.add(fingerprint);
   }
 
@@ -124,7 +143,7 @@ export async function getRockets(): Promise<Rocket[]> {
 export async function getLaunchById(id: string): Promise<Launch> {
   const fromSupplemental = supplementalLaunches.find((launch) => launch.id === id);
   if (fromSupplemental) {
-    return fromSupplemental;
+    return sanitizeLaunchLinks(fromSupplemental);
   }
 
   const res = await fetch(`${API_BASE}/launches/${id}`, {
@@ -132,12 +151,13 @@ export async function getLaunchById(id: string): Promise<Launch> {
   });
 
   if (res.ok) {
-    return res.json();
+    const baseLaunch = (await res.json()) as Launch;
+    return sanitizeLaunchLinks(baseLaunch);
   }
 
   const fromMergedList = (await getLaunches()).find((launch) => launch.id === id);
   if (fromMergedList) {
-    return fromMergedList;
+    return sanitizeLaunchLinks(fromMergedList);
   }
 
   throw new Error('Failed to fetch launch');
