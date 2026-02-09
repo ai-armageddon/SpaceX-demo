@@ -1,0 +1,30 @@
+[
+  {
+    "id": "supplemental-rocket-falcon-9-block-5",
+    "name": "Falcon 9 Block 5",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2018-05-11"
+  },
+  {
+    "id": "supplemental-rocket-starship-v1",
+    "name": "Starship V1",
+    "type": "Starship",
+    "active": true,
+    "first_flight": "2023-04-20"
+  },
+  {
+    "id": "supplemental-rocket-starship-v2",
+    "name": "Starship V2",
+    "type": "Starship",
+    "active": true,
+    "first_flight": "2025-01-16"
+  },
+  {
+    "id": "supplemental-rocket-starship-v3",
+    "name": "Starship V3",
+    "type": "Starship",
+    "active": true,
+    "first_flight": "Unknown"
+  }
+]

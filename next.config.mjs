@@ -6,7 +6,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'i.imgur.com' },
       { protocol: 'https', hostname: 'imgur.com' },
       { protocol: 'https', hostname: 'live.staticflickr.com' },
-      { protocol: 'https', hostname: '**.staticflickr.com' }
+      { protocol: 'https', hostname: '**.staticflickr.com' },
+      { protocol: 'https', hostname: 'thespacedevs-prod.nyc3.digitaloceanspaces.com' }
     ]
   }
 };

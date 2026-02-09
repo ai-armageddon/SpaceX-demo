@@ -1,10 +1,10 @@
 import LaunchBrowser from '@/components/LaunchBrowser';
-import { getLaunches, getRockets, includeInOfficialCount, stripExcludedLaunches } from '@/lib/spacex';
+import { getLaunches, getRockets } from '@/lib/spacex';
 
 export default async function HomePage() {
   const [launches, rockets] = await Promise.all([getLaunches(), getRockets()]);
-  const visibleLaunches = stripExcludedLaunches(launches);
-  const launchedCount = launches.filter(includeInOfficialCount).length;
+  const visibleLaunches = launches;
+  const launchedCount = visibleLaunches.filter((launch) => !launch.upcoming).length;
 
   return (
     <main className="min-h-screen pb-12">
@@ -22,7 +22,7 @@ export default async function HomePage() {
             </span>
             <span className="rounded-full border border-slate/70 bg-night/60 px-3 py-1">Rockets: {rockets.length}</span>
             <span className="rounded-full border border-slate/70 bg-night/60 px-3 py-1">
-              Data source: SpaceX API v4
+              Data source: SpaceX API v4 + supplemental sources
             </span>
           </div>
         </div>

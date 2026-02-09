@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { Launch, Rocket } from '@/lib/spacex';
-import { formatLaunchDate } from '@/lib/spacex';
+import { buildLaunchSlug, formatLaunchDate } from '@/lib/spacex';
 
 const sortOptions = [
   { value: 'date-desc', label: 'Date: Newest' },
@@ -13,11 +13,11 @@ const sortOptions = [
   { value: 'failure', label: 'Failure First' }
 ] as const;
 
-const statusOptions = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'success', label: 'Successful' },
-  { value: 'failure', label: 'Failed' },
-  { value: 'upcoming', label: 'Upcoming' }
+const hideFilterOptions = [
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'failure', label: 'Failed' },
+  { key: 'success', label: 'Successful' },
+  { key: 'pending', label: 'Pending' }
 ] as const;
 
 const viewOptions = [
@@ -34,7 +34,12 @@ export default function LaunchBrowser({
 }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<(typeof sortOptions)[number]['value']>('date-desc');
-  const [status, setStatus] = useState<(typeof statusOptions)[number]['value']>('all');
+  const [hideFilters, setHideFilters] = useState<Record<(typeof hideFilterOptions)[number]['key'], boolean>>({
+    upcoming: false,
+    failure: false,
+    success: false,
+    pending: false
+  });
   const [year, setYear] = useState<string>('all');
   const [view, setView] = useState<(typeof viewOptions)[number]['value']>('grid');
   const [page, setPage] = useState(1);
@@ -51,10 +56,10 @@ export default function LaunchBrowser({
       : launches.slice();
 
     const filteredByStatus = base.filter((launch) => {
-      if (status === 'all') return true;
-      if (status === 'success') return launch.success === true;
-      if (status === 'failure') return launch.success === false;
-      if (status === 'upcoming') return launch.upcoming === true;
+      if (launch.upcoming && hideFilters.upcoming) return false;
+      if (launch.success === true && hideFilters.success) return false;
+      if (launch.success === false && hideFilters.failure) return false;
+      if (launch.success === null && !launch.upcoming && hideFilters.pending) return false;
       return true;
     });
 
@@ -82,7 +87,7 @@ export default function LaunchBrowser({
     });
 
     return filteredByYear;
-  }, [launches, query, sort, status, year]);
+  }, [launches, query, sort, hideFilters, year]);
 
   const years = useMemo(() => {
     const set = new Set<string>();
@@ -101,106 +106,121 @@ export default function LaunchBrowser({
 
   useEffect(() => {
     setPage(1);
-  }, [query, sort, status, year, pageSize]);
+  }, [
+    query,
+    sort,
+    year,
+    pageSize,
+    hideFilters.upcoming,
+    hideFilters.failure,
+    hideFilters.success,
+    hideFilters.pending
+  ]);
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-10">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate/70 bg-steel/70 p-6 shadow-glow lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex-1">
+      <div className="grid gap-4 rounded-2xl border border-slate/70 bg-steel/70 p-6 shadow-glow sm:grid-cols-2 xl:grid-cols-12">
+        <div className="sm:col-span-2 xl:col-span-3">
           <p className="text-sm text-haze">Search missions</p>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Type a mission name"
-            className="mt-2 w-full rounded-xl border border-slate/60 bg-night/70 px-4 py-3 text-sm text-white outline-none transition focus:border-neon/70 focus:ring-2 focus:ring-neon/30"
+            className="mt-2 min-h-[52px] w-full rounded-xl border border-slate/60 bg-night/70 px-4 py-3 text-sm text-white outline-none transition focus:border-neon/70 focus:ring-2 focus:ring-neon/30"
           />
         </div>
-        <div className="grid w-full gap-4 sm:grid-cols-2 lg:w-auto lg:grid-cols-5">
-          <div>
-            <p className="text-sm text-haze">Sort launches</p>
-            <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
-              <select
-                value={sort}
-                onChange={(event) => setSort(event.target.value as typeof sort)}
-                className="w-full bg-transparent py-3 text-sm text-white outline-none"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value} className="bg-night">
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-haze">Filter status</p>
-            <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
-              <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value as typeof status)}
-                className="w-full bg-transparent py-3 text-sm text-white outline-none"
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value} className="bg-night">
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-haze">Filter year</p>
-            <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
-              <select
-                value={year}
-                onChange={(event) => setYear(event.target.value)}
-                className="w-full bg-transparent py-3 text-sm text-white outline-none"
-              >
-                <option value="all" className="bg-night">
-                  All Years
-                </option>
-                {years.map((item) => (
-                  <option key={item} value={item} className="bg-night">
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-haze">View</p>
-            <div className="mt-2 inline-flex w-full items-center gap-2 rounded-xl border border-slate/60 bg-night/70 p-1">
-              {viewOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setView(option.value)}
-                  className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-                    view === option.value
-                      ? 'bg-neon/20 text-neon'
-                      : 'text-haze hover:text-white'
-                  }`}
-                >
+        <div className="xl:col-span-2">
+          <p className="text-sm text-haze">Sort launches</p>
+          <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as typeof sort)}
+              className="min-h-[52px] w-full bg-transparent py-3 text-sm text-white outline-none"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value} className="bg-night">
                   {option.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-          <div>
-            <p className="text-sm text-haze">Page size</p>
-            <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
-              <select
-                value={pageSize}
-                onChange={(event) => setPageSize(Number(event.target.value))}
-                className="w-full bg-transparent py-3 text-sm text-white outline-none"
+        </div>
+        <div className="sm:col-span-2 xl:col-span-3">
+          <p className="text-sm text-haze">Hide filters</p>
+          <div className="mt-2 grid min-h-[52px] grid-cols-2 gap-2 rounded-xl border border-slate/60 bg-night/70 p-2 sm:grid-cols-4 xl:grid-cols-2">
+            {hideFilterOptions.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() =>
+                  setHideFilters((prev) => ({
+                    ...prev,
+                    [option.key]: !prev[option.key]
+                  }))
+                }
+                className={`h-9 whitespace-nowrap rounded-lg px-2 text-[11px] font-semibold uppercase tracking-wider transition sm:text-xs ${
+                  hideFilters[option.key]
+                    ? 'bg-rose-500/20 text-rose-200'
+                    : 'text-haze hover:text-white'
+                }`}
               >
-                {[12, 18, 24, 36].map((size) => (
-                  <option key={size} value={size} className="bg-night">
-                    {size} per page
-                  </option>
-                ))}
-              </select>
-            </div>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="xl:col-span-2">
+          <p className="text-sm text-haze">Filter year</p>
+          <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
+            <select
+              value={year}
+              onChange={(event) => setYear(event.target.value)}
+              className="min-h-[52px] w-full bg-transparent py-3 text-sm text-white outline-none"
+            >
+              <option value="all" className="bg-night">
+                All Years
+              </option>
+              {years.map((item) => (
+                <option key={item} value={item} className="bg-night">
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="xl:col-span-1">
+          <p className="text-sm text-haze">View</p>
+          <div className="mt-2 inline-flex min-h-[52px] w-full items-center gap-2 rounded-xl border border-slate/60 bg-night/70 p-1">
+            {viewOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setView(option.value)}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                  view === option.value
+                    ? 'bg-neon/20 text-neon'
+                    : 'text-haze hover:text-white'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="xl:col-span-1">
+          <p className="text-sm text-haze">Page size</p>
+          <div className="mt-2 inline-flex w-full items-center rounded-xl border border-slate/60 bg-night/70 px-3">
+            <select
+              value={pageSize}
+              onChange={(event) => setPageSize(Number(event.target.value))}
+              className="min-h-[52px] w-full bg-transparent py-3 text-sm text-white outline-none"
+            >
+              {[12, 18, 24, 36].map((size) => (
+                <option key={size} value={size} className="bg-night">
+                  {size} per page
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
@@ -218,9 +238,9 @@ export default function LaunchBrowser({
           return (
             <Link
               key={launch.id}
-              href={`/launch/${launch.id}`}
+              href={`/launch/${buildLaunchSlug(launch)}`}
               className={`group flex h-full gap-6 rounded-2xl border border-slate/70 bg-midnight/80 p-6 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-neon/60 hover:shadow-glow active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon/50 ${
-                view === 'grid' ? 'flex-col' : 'items-center'
+                view === 'grid' ? 'flex-col' : 'flex-col sm:flex-row sm:items-center'
               }`}
             >
               <div className="flex flex-1 items-start justify-between gap-4">

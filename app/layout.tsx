@@ -56,7 +56,7 @@ export default function RootLayout({
           <footer className="border-t border-slate/60 bg-midnight/60">
             <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-haze sm:flex-row sm:items-center sm:justify-between">
               <p>
-                Data provided by the community SpaceX API. This site is not powered by an official SpaceX API.
+                Data comes from community-maintained sources and is not powered by an official SpaceX API.
               </p>
               <div className="flex flex-wrap items-center gap-4">
                 <a
@@ -66,6 +66,22 @@ export default function RootLayout({
                   className="text-neon/80 underline-offset-4 transition hover:text-neon hover:underline"
                 >
                   docs.spacexdata.com
+                </a>
+                <a
+                  href="https://ll.thespacedevs.com/2.2.0/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-neon/80 underline-offset-4 transition hover:text-neon hover:underline"
+                >
+                  ll.thespacedevs.com
+                </a>
+                <a
+                  href="https://www.mediawiki.org/wiki/API:Main_page"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-neon/80 underline-offset-4 transition hover:text-neon hover:underline"
+                >
+                  mediawiki API
                 </a>
                 <a
                   href="https://x.com/jeremyboulerice"

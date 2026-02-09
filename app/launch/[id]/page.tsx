@@ -1,7 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { formatLaunchDate, getLaunchById, getRockets } from '@/lib/spacex';
+import {
+  extractLaunchId,
+  formatLaunchDate,
+  getLaunchById,
+  getRockets
+} from '@/lib/spacex';
 
 export default async function LaunchDetailPage({
   params
@@ -10,7 +15,7 @@ export default async function LaunchDetailPage({
 }) {
   try {
     const [launch, rockets] = await Promise.all([
-      getLaunchById(params.id),
+      getLaunchById(extractLaunchId(params.id)),
       getRockets()
     ]);
 
