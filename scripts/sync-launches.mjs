@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,7 +15,12 @@ const LL2_API_BASE = 'https://ll.thespacedevs.com/2.2.0/launch/';
 const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
 
 const BASE_CUTOFF_UTC = process.env.BASE_CUTOFF_UTC ?? '2022-12-04T23:59:59Z';
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.REQUEST_TIMEOUT_MS ?? '30000', 10);
+const REQUEST_RETRIES = Number.parseInt(process.env.REQUEST_RETRIES ?? '4', 10);
+const REQUEST_RETRY_BACKOFF_MS = Number.parseInt(process.env.REQUEST_RETRY_BACKOFF_MS ?? '5000', 10);
+const LL2_PAGE_DELAY_MS = Number.parseInt(process.env.LL2_PAGE_DELAY_MS ?? '2500', 10);
+const ENABLE_WIKIPEDIA_ENRICH = process.env.ENABLE_WIKIPEDIA_ENRICH === 'true';
+const MIN_LAUNCHES_TO_REPLACE = Number.parseInt(process.env.MIN_LAUNCHES_TO_REPLACE ?? '200', 10);
 
 const SOURCE_CATALOG = [
   {
@@ -41,26 +46,61 @@ function slugify(value) {
     .replace(/-+/g, '-');
 }
 
-async function fetchJson(url) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'SpaceX-Launch-Archive-Sync/1.0'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed (${response.status}): ${url}`);
-    }
-
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
+function parseRetryAfterMs(response) {
+  const retryAfter = response.headers.get('retry-after');
+  if (!retryAfter) return null;
+  const seconds = Number.parseInt(retryAfter, 10);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return seconds * 1000;
   }
+  return null;
+}
+
+async function fetchJson(url) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= REQUEST_RETRIES; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'SpaceX-Launch-Archive-Sync/1.0'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 429 && attempt < REQUEST_RETRIES) {
+          const retryAfterMs = parseRetryAfterMs(response) ?? REQUEST_RETRY_BACKOFF_MS * attempt;
+          console.warn(`[retry ${attempt}/${REQUEST_RETRIES}] 429 for ${url}. Waiting ${Math.round(retryAfterMs / 1000)}s before retry...`);
+          await sleep(retryAfterMs);
+          continue;
+        }
+
+        throw new Error(`Request failed (${response.status}): ${url}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (attempt < REQUEST_RETRIES) {
+        console.warn(`[retry ${attempt}/${REQUEST_RETRIES}] ${url} failed: ${message}. Retrying in ${REQUEST_RETRY_BACKOFF_MS * attempt}ms...`);
+        await sleep(REQUEST_RETRY_BACKOFF_MS * attempt);
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 function successFromStatus(status) {
@@ -182,12 +222,18 @@ function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
 }
 
 async function fetchSpaceXRocketsMap() {
-  const rockets = await fetchJson(`${SPACEX_API_BASE}/rockets`);
   const map = new Map();
 
-  for (const rocket of rockets) {
-    if (!rocket?.name || !rocket?.id) continue;
-    map.set(String(rocket.name).toLowerCase(), String(rocket.id));
+  try {
+    const rockets = await fetchJson(`${SPACEX_API_BASE}/rockets`);
+    for (const rocket of rockets) {
+      if (!rocket?.name || !rocket?.id) continue;
+      map.set(String(rocket.name).toLowerCase(), String(rocket.id));
+    }
+  } catch (error) {
+    console.warn(
+      `[warn] SpaceX rockets API unavailable (${error instanceof Error ? error.message : error}); falling back to supplemental rocket IDs`
+    );
   }
 
   return map;
@@ -209,6 +255,10 @@ async function fetchLL2Launches(startAfterUtc) {
 
     launches.push(...page.results);
     pageUrl = page.next;
+
+    if (pageUrl && LL2_PAGE_DELAY_MS > 0) {
+      await sleep(LL2_PAGE_DELAY_MS);
+    }
   }
 
   return launches;
@@ -273,6 +323,15 @@ async function enrichWikipediaLinks(launches) {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 }
 
+async function readJson(filePath, fallback = []) {
+  try {
+    const raw = await readFile(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
 async function writeJson(filePath, value) {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
@@ -284,10 +343,17 @@ async function main() {
     throw new Error(`Invalid BASE_CUTOFF_UTC: ${BASE_CUTOFF_UTC}`);
   }
 
+  const previousLaunches = await readJson(OUTPUT_LAUNCHES, []);
+  const previousRockets = await readJson(OUTPUT_ROCKETS, []);
+
   const knownRocketIdsByName = await fetchSpaceXRocketsMap();
   const ll2Launches = await fetchLL2Launches(cutoffUtc + 1000);
 
-  const supplementalRocketsById = new Map();
+  const supplementalRocketsById = new Map(
+    Array.isArray(previousRockets)
+      ? previousRockets.map((rocket) => [rocket.id, rocket])
+      : []
+  );
   const normalizedLaunches = [];
 
   for (const rawLaunch of ll2Launches) {
@@ -301,8 +367,19 @@ async function main() {
     }
   }
 
-  const dedupedLaunches = dedupeLaunches(normalizedLaunches);
-  await enrichWikipediaLinks(dedupedLaunches);
+  let dedupedLaunches = dedupeLaunches(normalizedLaunches);
+
+  const previousCount = Array.isArray(previousLaunches) ? previousLaunches.length : 0;
+  if (dedupedLaunches.length < MIN_LAUNCHES_TO_REPLACE && previousCount > dedupedLaunches.length) {
+    console.warn(
+      `[warn] refusing to replace supplemental launches with small dataset (${dedupedLaunches.length} < ${MIN_LAUNCHES_TO_REPLACE}); keeping previous (${previousCount})`
+    );
+    dedupedLaunches = previousLaunches;
+  }
+
+  if (ENABLE_WIKIPEDIA_ENRICH && dedupedLaunches.length > 0) {
+    await enrichWikipediaLinks(dedupedLaunches);
+  }
 
   const supplementalRockets = Array.from(supplementalRocketsById.values()).sort((a, b) =>
     a.name.localeCompare(b.name)

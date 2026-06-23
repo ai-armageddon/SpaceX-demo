@@ -7,6 +7,20 @@
     "first_flight": "2018-05-11"
   },
   {
+    "id": "supplemental-rocket-falcon-heavy",
+    "name": "Falcon Heavy",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2018-02-06"
+  },
+  {
+    "id": "supplemental-rocket-starship",
+    "name": "Starship",
+    "type": "Starship",
+    "active": true,
+    "first_flight": "Unknown"
+  },
+  {
     "id": "supplemental-rocket-starship-v1",
     "name": "Starship V1",
     "type": "Starship",
@@ -25,6 +39,6 @@
     "name": "Starship V3",
     "type": "Starship",
     "active": true,
-    "first_flight": "Unknown"
+    "first_flight": "2026-05-22"
   }
 ]

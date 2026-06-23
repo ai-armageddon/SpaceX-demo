@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: '/SpaceX-demo',
+  assetPrefix: '/SpaceX-demo/',
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images2.imgbox.com' },
@@ -10,6 +12,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'thespacedevs-prod.nyc3.digitaloceanspaces.com' }
     ]
   }
-};
+}
 
-export default nextConfig;
+module.exports = nextConfig

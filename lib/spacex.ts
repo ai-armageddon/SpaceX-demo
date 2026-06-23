@@ -113,31 +113,41 @@ function mergeRockets(primary: Rocket[], secondary: Rocket[]) {
 }
 
 export async function getLaunches(): Promise<Launch[]> {
-  const res = await fetch(`${API_BASE}/launches`, {
-    next: { revalidate: 3600 }
-  });
+  try {
+    const res = await fetch(`${API_BASE}/launches`, {
+      next: { revalidate: 3600 }
+    });
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch launches');
+    if (!res.ok) {
+      throw new Error('Failed to fetch launches');
+    }
+
+    const baseLaunches = (await res.json()) as Launch[];
+    const visibleBaseLaunches = stripExcludedLaunches(baseLaunches);
+
+    return mergeLaunches(visibleBaseLaunches, supplementalLaunches);
+  } catch {
+    console.warn('SpaceX API unavailable, using supplemental data only');
+    return supplementalLaunches;
   }
-
-  const baseLaunches = (await res.json()) as Launch[];
-  const visibleBaseLaunches = stripExcludedLaunches(baseLaunches);
-
-  return mergeLaunches(visibleBaseLaunches, supplementalLaunches);
 }
 
 export async function getRockets(): Promise<Rocket[]> {
-  const res = await fetch(`${API_BASE}/rockets`, {
-    next: { revalidate: 3600 }
-  });
+  try {
+    const res = await fetch(`${API_BASE}/rockets`, {
+      next: { revalidate: 3600 }
+    });
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch rockets');
+    if (!res.ok) {
+      throw new Error('Failed to fetch rockets');
+    }
+
+    const baseRockets = (await res.json()) as Rocket[];
+    return mergeRockets(baseRockets, supplementalRockets);
+  } catch {
+    console.warn('SpaceX API unavailable, using supplemental data only');
+    return supplementalRockets;
   }
-
-  const baseRockets = (await res.json()) as Rocket[];
-  return mergeRockets(baseRockets, supplementalRockets);
 }
 
 export async function getLaunchById(id: string): Promise<Launch> {

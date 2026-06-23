@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "data:sync": "node scripts/sync-launches.mjs"
+    "data:sync": "node scripts/sync-launches.mjs",
+    "cron:install": "bash scripts/install-cron.sh"
   },
   "dependencies": {
     "next": "14.2.5",

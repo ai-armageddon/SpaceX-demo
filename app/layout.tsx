@@ -18,13 +18,13 @@ export const metadata: Metadata = {
   title: 'SpaceX Launches',
   description: 'Explore every SpaceX mission with launch details and flight data.',
   icons: {
-    icon: '/icons/favicon.ico',
-    apple: '/icons/icon.png'
+    icon: '/SpaceX-demo/icons/favicon.ico',
+    apple: '/SpaceX-demo/icons/icon.png'
   },
   openGraph: {
     title: 'SpaceX Launches',
     description: 'Explore every SpaceX mission with launch details and flight data.',
-    images: ['/icons/icon.png']
+    images: ['/SpaceX-demo/icons/icon.png']
   }
 };
 
@@ -40,7 +40,7 @@ export default function RootLayout({
           <header className="border-b border-slate/60 bg-midnight/60 backdrop-blur">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
               <div className="flex items-center gap-4">
-                <Image src="/brand/spacex-logo.png" alt="SpaceX" width={140} height={28} priority />
+                <Image src="/SpaceX-demo/brand/spacex-logo.png" alt="SpaceX" width={140} height={28} priority />
                 <div>
                   <p className="text-sm uppercase tracking-[0.32em] text-haze">SpaceX Intelligence</p>
                   <h1 className="text-2xl font-semibold">Launch Archive</h1>

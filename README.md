@@ -32,5 +32,15 @@ Generated files:
 - `data/supplemental-rockets.json`
 - `data/supplemental-meta.json`
 
+**Deploy on a server (with daily auto-sync)**
+```bash
+npm install
+npm run build
+npm run cron:install   # installs daily 3 AM sync + rebuild + restart
+npm start              # or use PM2: pm2 start npm --name spacex-demo -- start
+```
+
+`npm run cron:install` is idempotent — running it again won't create duplicate cron entries.
+
 **What this demonstrates**
 This project shows how to build a data-rich Next.js App Router experience with server-side data fetching and a responsive, dark UI. It includes client-side search, sorting, pagination, and detail views while keeping performance smooth and payloads light. The UI emphasizes clean visual hierarchy and motion for a polished, production-ready feel.
