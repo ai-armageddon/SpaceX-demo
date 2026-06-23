@@ -35,10 +35,10 @@ export default function LaunchBrowser({
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<(typeof sortOptions)[number]['value']>('date-desc');
   const [hideFilters, setHideFilters] = useState<Record<(typeof hideFilterOptions)[number]['key'], boolean>>({
-    upcoming: false,
+    upcoming: true,
     failure: false,
     success: false,
-    pending: false
+    pending: true
   });
   const [year, setYear] = useState<string>('all');
   const [view, setView] = useState<(typeof viewOptions)[number]['value']>('grid');
@@ -181,7 +181,7 @@ export default function LaunchBrowser({
           </div>
         </div>
         <div className="min-w-0 sm:col-span-2 xl:col-span-2">
-          <p className="text-sm text-haze">Hide filters</p>
+          <p className="text-sm text-haze">Hide</p>
             <div className="mt-2 grid min-h-[52px] grid-cols-2 gap-2 rounded-xl border border-slate/60 bg-night/70 p-2 sm:grid-cols-4 xl:grid-cols-2">
             {hideFilterOptions.map((option) => (
               <button
