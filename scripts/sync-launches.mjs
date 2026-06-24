@@ -6,9 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 
-const OUTPUT_LAUNCHES = path.join(projectRoot, 'data', 'supplemental-launches.json');
-const OUTPUT_ROCKETS = path.join(projectRoot, 'data', 'supplemental-rockets.json');
-const OUTPUT_META = path.join(projectRoot, 'data', 'supplemental-meta.json');
+const SYNC_MODE = process.env.SYNC_MODE === 'historical' ? 'historical' : 'supplemental';
+const IS_HISTORICAL = SYNC_MODE === 'historical';
+const ID_PREFIX = IS_HISTORICAL ? 'historical-ll2-' : 'supplemental-ll2-';
+
+const OUTPUT_LAUNCHES = path.join(projectRoot, 'data', `${SYNC_MODE}-launches.json`);
+const OUTPUT_ROCKETS = path.join(projectRoot, 'data', `${SYNC_MODE}-rockets.json`);
+const OUTPUT_META = path.join(projectRoot, 'data', `${SYNC_MODE}-meta.json`);
 
 const SPACEX_API_BASE = 'https://api.spacexdata.com/v4';
 const LL2_API_BASE = 'https://ll.thespacedevs.com/2.2.0/launch/';
@@ -187,7 +191,11 @@ function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
 
   const launchDate = Date.parse(dateUtc);
   if (Number.isNaN(launchDate)) return null;
-  if (launchDate <= cutoffUtc) return null;
+  if (IS_HISTORICAL) {
+    if (launchDate > cutoffUtc) return null;
+  } else if (launchDate <= cutoffUtc) {
+    return null;
+  }
 
   const providerName = launch.launch_service_provider?.name ?? '';
   if (!providerName.toLowerCase().includes('spacex')) return null;
@@ -196,7 +204,7 @@ function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
 
   return {
     launch: {
-      id: `supplemental-ll2-${launch.id}`,
+      id: `${ID_PREFIX}${launch.id}`,
       name: launch.name ?? `SpaceX Launch ${launch.id}`,
       date_utc: new Date(launchDate).toISOString(),
       success: successFromStatus(launch.status),
@@ -245,7 +253,11 @@ async function fetchLL2Launches(startAfterUtc) {
   first.searchParams.set('limit', '100');
   first.searchParams.set('mode', 'detailed');
   first.searchParams.set('search', 'SpaceX');
-  first.searchParams.set('window_start__gte', new Date(startAfterUtc).toISOString());
+  if (IS_HISTORICAL) {
+    first.searchParams.set('window_start__lte', new Date(startAfterUtc).toISOString());
+  } else {
+    first.searchParams.set('window_start__gte', new Date(startAfterUtc).toISOString());
+  }
 
   let pageUrl = first.toString();
 
@@ -347,7 +359,7 @@ async function main() {
   const previousRockets = await readJson(OUTPUT_ROCKETS, []);
 
   const knownRocketIdsByName = await fetchSpaceXRocketsMap();
-  const ll2Launches = await fetchLL2Launches(cutoffUtc + 1000);
+  const ll2Launches = await fetchLL2Launches(IS_HISTORICAL ? cutoffUtc : cutoffUtc + 1000);
 
   const supplementalRocketsById = new Map(
     Array.isArray(previousRockets)

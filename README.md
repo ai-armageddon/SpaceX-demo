@@ -32,6 +32,24 @@ Generated files:
 - `data/supplemental-rockets.json`
 - `data/supplemental-meta.json`
 
+**Snapshot historical launch data (through Dec 2022)**
+```bash
+npm run data:historical
+```
+This is a one-off command that captures the full SpaceX launch history up to and
+including `2022-12-04T23:59:59Z` into a local snapshot, so the launch count and
+archive stay complete even when the live SpaceX API is unavailable. Past launches
+never change, so this rarely needs to be re-run.
+
+Generated files:
+- `data/historical-launches.json`
+- `data/historical-rockets.json`
+- `data/historical-meta.json`
+
+At runtime `lib/spacex.ts` merges the live SpaceX API (when reachable) with the
+local historical + supplemental snapshots, falling back to the local snapshots
+entirely if the API is down.
+
 **Deploy on a server (with daily auto-sync)**
 ```bash
 npm install

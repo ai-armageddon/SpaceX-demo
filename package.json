@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "data:sync": "node scripts/sync-launches.mjs",
+    "data:historical": "SYNC_MODE=historical node scripts/sync-launches.mjs",
     "cron:install": "bash scripts/install-cron.sh"
   },
   "dependencies": {

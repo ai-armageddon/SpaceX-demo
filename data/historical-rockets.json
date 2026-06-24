@@ -1,0 +1,58 @@
+[
+  {
+    "id": "supplemental-rocket-falcon-1",
+    "name": "Falcon 1",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2006-03-24"
+  },
+  {
+    "id": "supplemental-rocket-falcon-9-block-4",
+    "name": "Falcon 9 Block 4",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2015-12-22"
+  },
+  {
+    "id": "supplemental-rocket-falcon-9-block-5",
+    "name": "Falcon 9 Block 5",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2018-05-11"
+  },
+  {
+    "id": "supplemental-rocket-falcon-9-full-thrust",
+    "name": "Falcon 9 Full Thrust",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2015-12-22"
+  },
+  {
+    "id": "supplemental-rocket-falcon-9-v10",
+    "name": "Falcon 9 v1.0",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2010-06-04"
+  },
+  {
+    "id": "supplemental-rocket-falcon-9-v11",
+    "name": "Falcon 9 v1.1",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2013-09-29"
+  },
+  {
+    "id": "supplemental-rocket-falcon-heavy",
+    "name": "Falcon Heavy",
+    "type": "Falcon",
+    "active": true,
+    "first_flight": "2018-02-06"
+  },
+  {
+    "id": "supplemental-rocket-starship-prototype",
+    "name": "Starship Prototype",
+    "type": "Starship",
+    "active": true,
+    "first_flight": "2019-07-26"
+  }
+]

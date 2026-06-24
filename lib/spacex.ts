@@ -1,3 +1,5 @@
+import historicalLaunchesData from '@/data/historical-launches.json';
+import historicalRocketsData from '@/data/historical-rockets.json';
 import supplementalLaunchesData from '@/data/supplemental-launches.json';
 import supplementalRocketsData from '@/data/supplemental-rockets.json';
 
@@ -37,8 +39,13 @@ export type Rocket = {
   first_flight: string;
 };
 
+const historicalLaunches = historicalLaunchesData as Launch[];
+const historicalRockets = historicalRocketsData as Rocket[];
 const supplementalLaunches = supplementalLaunchesData as Launch[];
 const supplementalRockets = supplementalRocketsData as Rocket[];
+
+const localLaunches = [...historicalLaunches, ...supplementalLaunches];
+const localRockets = [...historicalRockets, ...supplementalRockets];
 const LL2_API_PREFIX = /^https?:\/\/ll\.thespacedevs\.com\/2\.2\.0\//i;
 
 function sanitizeExternalUrl(url: string | null) {
@@ -125,10 +132,10 @@ export async function getLaunches(): Promise<Launch[]> {
     const baseLaunches = (await res.json()) as Launch[];
     const visibleBaseLaunches = stripExcludedLaunches(baseLaunches);
 
-    return mergeLaunches(visibleBaseLaunches, supplementalLaunches);
+    return mergeLaunches(visibleBaseLaunches, localLaunches);
   } catch {
-    console.warn('SpaceX API unavailable, using supplemental data only');
-    return supplementalLaunches;
+    console.warn('SpaceX API unavailable, using local snapshot data only');
+    return mergeLaunches(historicalLaunches, supplementalLaunches);
   }
 }
 
@@ -143,17 +150,17 @@ export async function getRockets(): Promise<Rocket[]> {
     }
 
     const baseRockets = (await res.json()) as Rocket[];
-    return mergeRockets(baseRockets, supplementalRockets);
+    return mergeRockets(baseRockets, localRockets);
   } catch {
-    console.warn('SpaceX API unavailable, using supplemental data only');
-    return supplementalRockets;
+    console.warn('SpaceX API unavailable, using local snapshot data only');
+    return mergeRockets(historicalRockets, supplementalRockets);
   }
 }
 
 export async function getLaunchById(id: string): Promise<Launch> {
-  const fromSupplemental = supplementalLaunches.find((launch) => launch.id === id);
-  if (fromSupplemental) {
-    return sanitizeLaunchLinks(fromSupplemental);
+  const fromLocal = localLaunches.find((launch) => launch.id === id);
+  if (fromLocal) {
+    return sanitizeLaunchLinks(fromLocal);
   }
 
   const res = await fetch(`${API_BASE}/launches/${id}`, {
@@ -201,10 +208,12 @@ export function extractLaunchId(slugOrId: string) {
     return slugOrId.slice(separatorIndex + separator.length);
   }
 
-  const supplementalToken = 'supplemental-ll2-';
-  const supplementalIndex = slugOrId.indexOf(supplementalToken);
-  if (supplementalIndex !== -1) {
-    return slugOrId.slice(supplementalIndex);
+  const localTokens = ['supplemental-ll2-', 'historical-ll2-'];
+  for (const token of localTokens) {
+    const tokenIndex = slugOrId.indexOf(token);
+    if (tokenIndex !== -1) {
+      return slugOrId.slice(tokenIndex);
+    }
   }
 
   if (slugOrId.includes('-')) {
