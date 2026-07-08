@@ -3,8 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import LocalLaunchTime, { ViewerTimezone } from '@/components/LocalLaunchTime';
 import type { Launch, Rocket } from '@/lib/spacex';
-import { buildLaunchSlug, formatLaunchDate } from '@/lib/spacex';
+import { buildLaunchSlug } from '@/lib/spacex';
 
 const sortOptions = [
   { value: 'date-desc', label: 'Date: Newest' },
@@ -258,6 +259,7 @@ export default function LaunchBrowser({
             </select>
           </div>
         </div>
+        <ViewerTimezone className="min-w-0 sm:col-span-2 xl:col-span-2" />
       </div>
 
       {filtered.length > 0 && (
@@ -380,7 +382,7 @@ export default function LaunchBrowser({
                   )}
                 </div>
                 <div className="text-sm text-haze">
-                  <p className="font-medium text-white">{formatLaunchDate(launch.date_utc)}</p>
+                  <LocalLaunchTime dateUtc={launch.date_utc} />
                   {view === 'grid' && (
                     <p>{rocket ? `${rocket.name} · ${rocket.type}` : 'Unknown Rocket'}</p>
                   )}

@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import LocalLaunchTime from '@/components/LocalLaunchTime';
 import {
   extractLaunchId,
-  formatLaunchDate,
   getLaunchById,
   getRockets
 } from '@/lib/spacex';
@@ -40,7 +40,12 @@ export default async function LaunchDetailPage({
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-haze">Mission</p>
                 <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">{launch.name}</h1>
-                <p className="mt-3 text-haze">{formatLaunchDate(launch.date_utc)}</p>
+                <LocalLaunchTime
+                  dateUtc={launch.date_utc}
+                  className="mt-3"
+                  dateClassName="text-haze"
+                  detailClassName="mt-1 text-sm text-haze/80"
+                />
               </div>
               <div
                 className={`rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wider ${
