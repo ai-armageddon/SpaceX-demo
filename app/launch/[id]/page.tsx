@@ -42,6 +42,7 @@ export default async function LaunchDetailPage({
                 <h1 className="mt-3 text-3xl font-semibold text-white md:text-4xl">{launch.name}</h1>
                 <LocalLaunchTime
                   dateUtc={launch.date_utc}
+                  launchTimeZone={launch.launch_time_zone}
                   className="mt-3"
                   dateClassName="text-haze"
                   detailClassName="mt-1 text-sm text-haze/80"

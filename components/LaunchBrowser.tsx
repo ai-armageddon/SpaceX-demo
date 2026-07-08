@@ -382,7 +382,10 @@ export default function LaunchBrowser({
                   )}
                 </div>
                 <div className="text-sm text-haze">
-                  <LocalLaunchTime dateUtc={launch.date_utc} />
+                  <LocalLaunchTime
+                    dateUtc={launch.date_utc}
+                    launchTimeZone={launch.launch_time_zone}
+                  />
                   {view === 'grid' && (
                     <p>{rocket ? `${rocket.name} · ${rocket.type}` : 'Unknown Rocket'}</p>
                   )}

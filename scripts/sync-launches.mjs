@@ -185,6 +185,11 @@ function normalizeRocket(launch, knownRocketIdsByName) {
   };
 }
 
+function normalizeLaunchTimeZone(launch) {
+  const timeZone = launch.pad?.location?.timezone_name;
+  return typeof timeZone === 'string' && timeZone.trim() ? timeZone : null;
+}
+
 function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
   const dateUtc = launch.net ?? launch.window_start ?? launch.window_end;
   if (!dateUtc) return null;
@@ -207,6 +212,7 @@ function normalizeLaunch(launch, knownRocketIdsByName, cutoffUtc) {
       id: `${ID_PREFIX}${launch.id}`,
       name: launch.name ?? `SpaceX Launch ${launch.id}`,
       date_utc: new Date(launchDate).toISOString(),
+      launch_time_zone: normalizeLaunchTimeZone(launch),
       success: successFromStatus(launch.status),
       upcoming: isUpcoming(launch.status, dateUtc),
       rocket: rocketId,

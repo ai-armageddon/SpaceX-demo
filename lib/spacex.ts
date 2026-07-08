@@ -9,6 +9,7 @@ export type Launch = {
   id: string;
   name: string;
   date_utc: string;
+  launch_time_zone?: string | null;
   success: boolean | null;
   upcoming: boolean;
   rocket: string;

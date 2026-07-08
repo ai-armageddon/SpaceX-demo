@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 type LocalLaunchTimeProps = {
   dateUtc: string;
+  launchTimeZone?: string | null;
   className?: string;
   dateClassName?: string;
   detailClassName?: string;
@@ -55,25 +56,31 @@ export function ViewerTimezone({ className }: ViewerTimezoneProps) {
 
 export default function LocalLaunchTime({
   dateUtc,
+  launchTimeZone,
   className,
   dateClassName = 'font-medium text-white',
   detailClassName = 'mt-1 text-xs text-haze'
 }: LocalLaunchTimeProps) {
   const viewerTimeZone = useViewerTimeZone();
-  const timeZone = viewerTimeZone ?? 'UTC';
+  const missionTimeZone = launchTimeZone ?? 'UTC';
 
-  const { dateLabel, detailLabel } = useMemo(
-    () => ({
-      dateLabel: formatInTimeZone(dateUtc, timeZone, false),
-      detailLabel: formatInTimeZone(dateUtc, timeZone, true)
-    }),
-    [dateUtc, timeZone]
+  const { launchLabel, viewerLabel } = useMemo(
+    () => {
+      const launchLabel = formatInTimeZone(dateUtc, missionTimeZone, true);
+      const viewerLabel =
+        viewerTimeZone && viewerTimeZone !== missionTimeZone
+          ? formatInTimeZone(dateUtc, viewerTimeZone, true)
+          : null;
+
+      return { launchLabel, viewerLabel };
+    },
+    [dateUtc, missionTimeZone, viewerTimeZone]
   );
 
   return (
     <div className={className} suppressHydrationWarning>
-      <p className={dateClassName}>{dateLabel}</p>
-      <p className={detailClassName}>{detailLabel}</p>
+      <p className={dateClassName}>Launch site: {launchLabel}</p>
+      {viewerLabel && <p className={detailClassName}>Your local: {viewerLabel}</p>}
     </div>
   );
 }

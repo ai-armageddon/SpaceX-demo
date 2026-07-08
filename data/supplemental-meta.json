@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-06-23T23:39:26.511Z",
+  "generated_at_utc": "2026-07-08T23:28:14.851Z",
   "base_cutoff_utc": "2022-12-04T23:59:59.000Z",
   "sources": [
     {
@@ -16,7 +16,7 @@
     }
   ],
   "stats": {
-    "supplemental_launches": 621,
+    "supplemental_launches": 624,
     "supplemental_rockets": 6
   }
 }
